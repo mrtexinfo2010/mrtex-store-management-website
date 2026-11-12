@@ -9,13 +9,28 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="wrap">
+
+<!-- Login / Lock Screen Overlay -->
+<div id="login-screen" class="login-overlay">
+  <div class="login-box">
+    <div class="logo" style="display:inline-block;margin-bottom:12px;"><img alt="M.R. TEX" src="MRTEX-Logo.jpg"></div>
+    <h2>M.R.TEX STORE MANAGEMENT</h2>
+    <p class="mu">Authorized Access Only</p>
+    <div id="login-msg" class="login-err" style="display:none;"></div>
+    <label>Email<input type="email" id="login-email" value="mrtexinfo2010@gmail.com" readonly></label>
+    <label>Password<input type="password" id="login-pass" placeholder="Enter password (mrtex2025)" autocomplete="current-password"></label>
+    <button class="pr" id="login-btn" style="width:100%;margin-top:4px;">Login</button>
+  </div>
+</div>
+
+<div class="wrap" id="app-wrap" style="display:none;">
   <div class="hd">
     <div class="logo"><img alt="M.R. TEX" src="MRTEX-Logo.jpg"></div>
-    <div>
+    <div style="flex:1;">
       <h1>M.R.TEX STORE MANAGEMENT</h1>
       <div class="mu">For Your Textile Needs</div>
     </div>
+    <button id="lock-btn" class="gh" title="Lock Website" style="margin-left:auto;">🔒 Lock</button>
   </div>
   <div id="msg"></div>
   <div class="stats" id="st"></div>
