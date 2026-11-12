@@ -7,7 +7,7 @@ const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOStr
 function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',3200)}
 const err=e=>toast(e&&e.code==='invalid_argument'?'No permission to edit data (only the owner or contributors can).':'Something went wrong, please try again.');
 
-// Login Logic with trimmed pass check
+// Login Logic
 function handleLogin(){
   const p=$('#login-pass').value.trim();
   const msg=$('#login-msg');
@@ -21,6 +21,7 @@ function handleLogin(){
     msg.style.display='block';
   }
 }
+
 function checkAuth(){
   if(sessionStorage.getItem('mrtex_auth')==='1'){
     $('#login-screen').style.display='none';
@@ -30,17 +31,6 @@ function checkAuth(){
     $('#app-wrap').style.display='none';
   }
 }
-document.addEventListener('DOMContentLoaded', ()=>{
-  $('#login-btn').addEventListener('click',handleLogin);
-  $('#login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')handleLogin()});
-  $('#lock-btn').addEventListener('click',()=>{
-    sessionStorage.removeItem('mrtex_auth');
-    $('#login-pass').value='';
-    $('#login-msg').style.display='none';
-    checkAuth();
-  });
-  checkAuth();
-});
 
 const byCode=(a,b)=>{const x=a.code||'',y=b.code||'';if(x&&!y)return -1;if(!x&&y)return 1;return x.localeCompare(y,undefined,{numeric:true,sensitivity:'base'})||a.name.localeCompare(b.name)};
 function calc(){
@@ -209,6 +199,19 @@ async function delItem(id){
     await db.doc('photos/'+id).delete().catch(()=>{});
   }catch(e){err(e)}
 }
+
+// Event Listeners & Initialization
+document.addEventListener('DOMContentLoaded', ()=>{
+  checkAuth();
+  $('#login-btn').addEventListener('click', handleLogin);
+  $('#login-pass').addEventListener('keydown', e=>{ if(e.key==='Enter') handleLogin(); });
+  $('#lock-btn').addEventListener('click', ()=>{
+    sessionStorage.removeItem('mrtex_auth');
+    $('#login-pass').value='';
+    $('#login-msg').style.display='none';
+    checkAuth();
+  });
+});
 
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-a],[data-tab],[data-c]');if(!b)return;
