@@ -7,7 +7,7 @@ const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOStr
 function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',3200)}
 const err=e=>toast(e&&e.code==='invalid_argument'?'No permission to edit data (only the owner or contributors can).':'Something went wrong, please try again.');
 
-// Login Logic
+// Login Logic with trimmed pass check
 function handleLogin(){
   const p=$('#login-pass').value.trim();
   const msg=$('#login-msg');
@@ -17,7 +17,7 @@ function handleLogin(){
     $('#app-wrap').style.display='block';
     render();
   }else{
-    msg.textContent='Incorrect password. Please try again (mrtex2025).';
+    msg.textContent='Incorrect password. Please try again.';
     msg.style.display='block';
   }
 }
@@ -30,12 +30,15 @@ function checkAuth(){
     $('#app-wrap').style.display='none';
   }
 }
-$('#login-btn').addEventListener('click',handleLogin);
-$('#login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')handleLogin()});
-$('#lock-btn').addEventListener('click',()=>{
-  sessionStorage.removeItem('mrtex_auth');
-  $('#login-pass').value='';
-  $('#login-msg').style.display='none';
+document.addEventListener('DOMContentLoaded', ()=>{
+  $('#login-btn').addEventListener('click',handleLogin);
+  $('#login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')handleLogin()});
+  $('#lock-btn').addEventListener('click',()=>{
+    sessionStorage.removeItem('mrtex_auth');
+    $('#login-pass').value='';
+    $('#login-msg').style.display='none';
+    checkAuth();
+  });
   checkAuth();
 });
 
@@ -355,8 +358,6 @@ async function storageMeter(){
 $('#rf').addEventListener('change',e=>{const fl=e.target.files[0];e.target.value='';if(fl)ask('Replace ALL current data with this backup file?',()=>doRestore(fl))});
 
 (async function init(){
-  checkAuth();
-  render();
   dls=fileDl;$('#bk').style.display='';
   try{db=await openDb()}catch(e){db=null}
   if(!db){$('#msg').innerHTML='<div class="note">Browser storage is not available (private/incognito window?). Please open this page in a normal browser window.</div>';return}
