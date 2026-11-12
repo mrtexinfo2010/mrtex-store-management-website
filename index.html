@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>M.R.TEX Store Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="hd"><div class="logo"><img alt="M.R. TEX" src="logo.jpg"></div><h1>M.R.TEX STORE MANAGEMENT</h1></div>
+  <div id="msg"></div>
+  <div class="stats" id="st"></div>
+  <div class="mu" id="sm" style="margin:-4px 0 14px"></div>
+  <div class="bar">
+    <div class="sw"><input id="q" placeholder="Search product name or code…" autocomplete="off"><button class="sx" id="qx" data-a="clr" title="Clear">×</button><div id="sg"></div></div>
+    <button class="pr" data-a="new">+ New Item</button>
+    <button id="bk" data-a="backup" style="display:none" title="Download all data in one Excel file">⬇ Full Backup</button>
+    <button data-a="jbk" title="Restorable backup file (includes photos)">💾 Backup file</button>
+    <button data-a="rst" title="Restore from a backup file">⬆ Restore</button>
+    <input type="file" id="rf" accept=".json,application/json" hidden>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div id="list"></div>
+</div>
+
+<dialog id="d1">
+  <h3>New Item</h3>
+  <label>Item name<input id="n1"></label>
+  <label>Code / Part no. (optional)<input id="n2"></label>
+  <div class="row">
+    <label>Unit<input id="n3" value="pcs"></label>
+    <label>Opening stock<input id="n4" type="number" min="0" value="0"></label>
+    <label>Minimum stock<input id="n5" type="number" min="0" value="0"></label>
+  </div>
+  <label>Photo (optional)<input id="n6" type="file" accept="image/*"></label>
+  <div class="btns"><button class="gh" data-c="d1">Cancel</button><button class="pr" data-a="saveItem">Save</button></div>
+</dialog>
+
+<dialog id="d2">
+  <h3 id="m0"></h3>
+  <div class="mu" id="m1" style="margin-bottom:10px"></div>
+  <label>Quantity<input id="m2" type="number" min="1"></label>
+  <label>Date<input id="m3" type="date"></label>
+  <label>Note (received from / issued to)<input id="m4"></label>
+  <div class="btns"><button class="gh" data-c="d2">Cancel</button><button class="pr" data-a="saveMove">Save</button></div>
+</dialog>
+
+<dialog id="d3">
+  <h3 id="c0"></h3>
+  <div class="btns"><button class="gh" data-c="d3">No</button><button class="pr" data-a="ok">Yes, delete</button></div>
+</dialog>
+
+<dialog id="d4">
+  <h3 id="lbn"></h3>
+  <img id="lbi" alt="" style="max-width:100%;max-height:60vh;display:block;margin:0 auto 12px;border-radius:10px;background:#fff">
+  <div class="btns"><button class="gh" data-a="rmph">Remove photo</button><button data-a="chph">Change photo</button><button class="pr" data-c="d4">Close</button></div>
+</dialog>
+<input type="file" id="pf" accept="image/*" hidden>
+<div id="toast"></div>
+
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
