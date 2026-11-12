@@ -6,6 +6,7 @@ const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOStr
 function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',3200)}
 const err=e=>toast(e&&e.code==='invalid_argument'?'No permission to edit data (only the owner or contributors can).':'Something went wrong, please try again.');
 
+const byCode=(a,b)=>{const x=a.code||'',y=b.code||'';if(x&&!y)return -1;if(!x&&y)return 1;return x.localeCompare(y,undefined,{numeric:true,sensitivity:'base'})||a.name.localeCompare(b.name)};
 function calc(){
   const t={};
   items.forEach(i=>t[i.id]={in:0,out:0,bal:0});
@@ -15,7 +16,7 @@ function calc(){
 }
 function monthly(){
   const start=ym+'-01';
-  return items.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(i=>{
+  return items.slice().sort(byCode).map(i=>{
     let open=Number(i.opening)||0,inn=0,out=0;
     moves.forEach(m=>{
       if(m.itemId!==i.id)return;
@@ -37,7 +38,7 @@ function render(){
   const match=i=>!ql||(i.name+' '+(i.code||'')).toLowerCase().includes(ql);
   let h='';
   if(tab==='stock'){
-    const rows=items.filter(match).sort((a,b)=>a.name.localeCompare(b.name));
+    const rows=items.filter(match).sort(byCode);
     if(!rows.length)h=`<div class="tw"><div class="empty">${items.length?'No items found':'No items yet — click “+ New Item”'}</div></div>`;
     else h=`<div class="tw"><table><tr><th>Item</th><th>Unit</th><th>Opening</th><th>In</th><th>Out</th><th>Current balance</th><th></th></tr>`+rows.map(i=>{
       const x=t[i.id],lw=i.min>0&&x.bal<=i.min;
@@ -117,7 +118,7 @@ async function backup(){
   if(!dls)return noDl();
   const t=calc(),byId={};items.forEach(i=>byId[i.id]=i);
   const A=[['Item','Code','Unit','Opening stock','Total In','Total Out','Current balance','Minimum stock']];
-  items.slice().sort((a,b)=>a.name.localeCompare(b.name)).forEach(i=>{const x=t[i.id];A.push([i.name,i.code||'',i.unit,Number(i.opening)||0,x.in,x.out,x.bal,Number(i.min)||0])});
+  items.slice().sort(byCode).forEach(i=>{const x=t[i.id];A.push([i.name,i.code||'',i.unit,Number(i.opening)||0,x.in,x.out,x.bal,Number(i.min)||0])});
   const B=[['Date','Item','Code','Type','Quantity','Unit','Note']];
   moves.filter(m=>byId[m.itemId]).sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(a.ts||0)-(b.ts||0)).forEach(m=>{const i=byId[m.itemId];B.push([m.date,i.name,i.code||'',m.type==='in'?'IN':'OUT',Number(m.qty)||0,i.unit,m.note||''])});
   const base='mrtex-store-backup-'+today()+'.';
@@ -181,6 +182,7 @@ document.addEventListener('click',e=>{
   if(d.a==='dltx')return dlTx();
   if(d.a==='backup')return backup();
   if(d.a==='jbk')return jsonBackup();
+  if(d.a==='exp')return exportSeed();
   if(d.a==='rst')return $('#rf').click();
   if(d.a==='pickp'){const i=items.find(x=>x.id===d.id);if(i){q=i.name;$('#q').value=q;tab='stock';render();$('#sg').style.display='none';$('#qx').style.display='block'}return}
   if(d.a==='clr'){q='';$('#q').value='';$('#sg').style.display='none';$('#qx').style.display='none';return render()}
@@ -219,7 +221,7 @@ document.addEventListener('click',e=>{if(!e.target.closest('.sw'))$('#sg').style
 
 /* ---- Offline storage: browser IndexedDB ---- */
 const fileDl={async save({filename,data}){
-  const ty=/\.csv$/.test(filename)?'text/csv;charset=utf-8':/\.json$/.test(filename)?'application/json':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  const ty=/\.csv$/.test(filename)?'text/csv;charset=utf-8':/\.js$/.test(filename)?'text/javascript':/\.json$/.test(filename)?'application/json':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
   const b=data instanceof Blob?data:new Blob([data],{type:ty});
   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=filename;document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href),5000);return{status:'saved'}}};
@@ -253,7 +255,7 @@ function openDb(){return new Promise((res,rej)=>{
         onSnapshot(next){(subs[col]=subs[col]||new Set()).add(next);notify(col)}
       })
     });
-  }})}
+  })}
 async function jsonBackup(){
   if(!dls)return noDl();
   try{
@@ -262,6 +264,25 @@ async function jsonBackup(){
     await dls.save({filename:'mrtex-restorable-backup-'+today()+'.json',data:b});
     await markBackup();
   }catch(e){toast('Backup failed, please try again.')}
+}
+async function exportSeed(){
+  if(!dls)return noDl();
+  try{
+    const all=await req(tx('readonly').getAll());
+    const js='window.MRTEX_SEED='+JSON.stringify({app:'mrtex-store',v:1,docs:all})+';\n';
+    await dls.save({filename:'data.js',data:new Blob([js],{type:'text/javascript'})});
+    toast('data.js downloaded — upload it to GitHub');
+  }catch(e){toast('Export failed, please try again.')}
+}
+async function seedIfEmpty(){
+  try{
+    const S=window.MRTEX_SEED;
+    if(!S||S.app!=='mrtex-store'||!Array.isArray(S.docs)||!S.docs.length)return;
+    if(await req(tx('readonly').count()))return;
+    const t=IDB.transaction('docs','readwrite'),st=t.objectStore('docs');
+    S.docs.forEach(d=>st.put(d));
+    await new Promise((res,rej)=>{t.oncomplete=res;t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error)});
+  }catch(e){}
 }
 async function doRestore(file){
   try{
@@ -304,6 +325,7 @@ $('#rf').addEventListener('change',e=>{const fl=e.target.files[0];e.target.value
   dls=fileDl;$('#bk').style.display='';
   try{db=await openDb()}catch(e){db=null}
   if(!db){$('#msg').innerHTML='<div class="note">Browser storage is not available (private/incognito window?). Please open this page in a normal browser window.</div>';return}
+  await seedIfEmpty();
   storageMeter();
   const snap=s=>s.docs.map(d=>({id:d.id,...d.data()}));
   db.collection('items').onSnapshot(s=>{items=snap(s);render();storageMeter()},err);
