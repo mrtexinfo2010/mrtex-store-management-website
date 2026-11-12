@@ -1,3 +1,4 @@
+const CORRECT_PASS='mrtex2025';
 let photoTarget='',lbId='',db=null,dls=null,items=[],moves=[],tab='stock',q='',mvType='',mvItem='',pending=null,ym=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -5,6 +6,38 @@ const f=n=>Number(n||0).toLocaleString('en-US');
 const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
 function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',3200)}
 const err=e=>toast(e&&e.code==='invalid_argument'?'No permission to edit data (only the owner or contributors can).':'Something went wrong, please try again.');
+
+// Login Logic
+function handleLogin(){
+  const p=$('#login-pass').value.trim();
+  const msg=$('#login-msg');
+  if(p===CORRECT_PASS){
+    sessionStorage.setItem('mrtex_auth','1');
+    $('#login-screen').style.display='none';
+    $('#app-wrap').style.display='block';
+    render();
+  }else{
+    msg.textContent='Incorrect password. Please try again (mrtex2025).';
+    msg.style.display='block';
+  }
+}
+function checkAuth(){
+  if(sessionStorage.getItem('mrtex_auth')==='1'){
+    $('#login-screen').style.display='none';
+    $('#app-wrap').style.display='block';
+  }else{
+    $('#login-screen').style.display='grid';
+    $('#app-wrap').style.display='none';
+  }
+}
+$('#login-btn').addEventListener('click',handleLogin);
+$('#login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')handleLogin()});
+$('#lock-btn').addEventListener('click',()=>{
+  sessionStorage.removeItem('mrtex_auth');
+  $('#login-pass').value='';
+  $('#login-msg').style.display='none';
+  checkAuth();
+});
 
 const byCode=(a,b)=>{const x=a.code||'',y=b.code||'';if(x&&!y)return -1;if(!x&&y)return 1;return x.localeCompare(y,undefined,{numeric:true,sensitivity:'base'})||a.name.localeCompare(b.name)};
 function calc(){
@@ -30,6 +63,7 @@ function monthly(){
 const card=(l,v,c)=>`<div class="card ${c||''}"><small>${l}</small><b>${v}</b></div>`;
 
 function render(){
+  if(sessionStorage.getItem('mrtex_auth')!=='1')return;
   const t=calc(),ql=q.trim().toLowerCase();
   const low=items.filter(i=>i.min>0&&t[i.id].bal<=i.min).length;
   $('#st').innerHTML=card('Total items',f(items.length))+card('Low stock',f(low),low?'w':'')+card('Total transactions',f(moves.length));
@@ -321,6 +355,7 @@ async function storageMeter(){
 $('#rf').addEventListener('change',e=>{const fl=e.target.files[0];e.target.value='';if(fl)ask('Replace ALL current data with this backup file?',()=>doRestore(fl))});
 
 (async function init(){
+  checkAuth();
   render();
   dls=fileDl;$('#bk').style.display='';
   try{db=await openDb()}catch(e){db=null}
