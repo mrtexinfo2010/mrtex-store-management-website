@@ -12,7 +12,9 @@
 <!-- Login Screen Overlay -->
 <div id="login-overlay">
   <div class="login-card">
-    <img alt="M.R. TEX" src="logo.jpg">
+    <img alt="M.R. TEX" src="MRTEX-Logo.jpg" onerror="this.style.display='none'; document.getElementById('fallback-login').style.display='block';">
+    <div id="fallback-login" style="display:none; font-size:22px; font-weight:700; color:#111; margin-bottom:16px;">📦 M.R. TEX</div>
+    
     <h2>M.R.TEX Store Login</h2>
     <input type="password" id="loginPass" placeholder="Enter password" autocomplete="current-password">
     <button id="loginBtn">Login</button>
@@ -23,7 +25,10 @@
 <!-- Main Application Wrap (Initially Hidden) -->
 <div class="wrap" id="appWrap" style="display:none;">
   <div class="hd">
-    <div class="logo"><img alt="M.R. TEX" src="logo.jpg"></div>
+    <div class="logo">
+      <img alt="M.R. TEX" src="MRTEX-Logo.jpg" onerror="this.style.display='none'; document.getElementById('fallback-hd').style.display='block';">
+      <span id="fallback-hd" style="display:none; font-weight:bold; font-size:13px; color:#111;">📦 M.R. TEX</span>
+    </div>
     <h1>M.R.TEX STORE MANAGEMENT</h1>
     <button id="logoutBtn" title="Logout">Logout</button>
   </div>
