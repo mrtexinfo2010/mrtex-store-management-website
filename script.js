@@ -1,36 +1,13 @@
-const CORRECT_PASS='mrtex2025';
-let photoTarget='',lbId='',db=null,dls=null,items=[],moves=[],tab='stock',q='',mvType='',mvItem='',pending=null,ym=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
+// --- LOGIN CONFIGURATION ---
+const APP_PASSWORD = "mrtex123"; // Ekhane apnar pochhondo moto password change kore dite paren
+
+let photoTarget='',lbId='',db=null,dls=null,items=[],moves=[],tab='stock',q='',mvType='',mvItem='',pending=null,ym=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0'),appStarted=false;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const f=n=>Number(n||0).toLocaleString('en-US');
 const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
 function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',3200)}
 const err=e=>toast(e&&e.code==='invalid_argument'?'No permission to edit data (only the owner or contributors can).':'Something went wrong, please try again.');
-
-// Login Logic
-function handleLogin(){
-  const p=$('#login-pass').value.trim();
-  const msg=$('#login-msg');
-  if(p===CORRECT_PASS){
-    sessionStorage.setItem('mrtex_auth','1');
-    $('#login-screen').style.display='none';
-    $('#app-wrap').style.display='block';
-    render();
-  }else{
-    msg.textContent='Incorrect password. Please try again.';
-    msg.style.display='block';
-  }
-}
-
-function checkAuth(){
-  if(sessionStorage.getItem('mrtex_auth')==='1'){
-    $('#login-screen').style.display='none';
-    $('#app-wrap').style.display='block';
-  }else{
-    $('#login-screen').style.display='grid';
-    $('#app-wrap').style.display='none';
-  }
-}
 
 const byCode=(a,b)=>{const x=a.code||'',y=b.code||'';if(x&&!y)return -1;if(!x&&y)return 1;return x.localeCompare(y,undefined,{numeric:true,sensitivity:'base'})||a.name.localeCompare(b.name)};
 function calc(){
@@ -56,7 +33,6 @@ function monthly(){
 const card=(l,v,c)=>`<div class="card ${c||''}"><small>${l}</small><b>${v}</b></div>`;
 
 function render(){
-  if(sessionStorage.getItem('mrtex_auth')!=='1')return;
   const t=calc(),ql=q.trim().toLowerCase();
   const low=items.filter(i=>i.min>0&&t[i.id].bal<=i.min).length;
   $('#st').innerHTML=card('Total items',f(items.length))+card('Low stock',f(low),low?'w':'')+card('Total transactions',f(moves.length));
@@ -88,7 +64,7 @@ function render(){
 }
 
 const cell=c=>{if(c==null)return '';if(typeof c==='string'&&/^[=+\-@]/.test(c))c="'"+c;c=String(c);return /[",\r\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c};
-const csv=rows=>'﻿'+rows.map(r=>r.map(cell).join(',')).join('\r\n');
+const csv=rows=>'\uFEFF'+rows.map(r=>r.map(cell).join(',')).join('\r\n');
 async function dl(name,rows){
   if(!dls)return noDl();
   try{await dls.save({filename:name,data:csv(rows)})}
@@ -104,7 +80,7 @@ function dlTx(){
   if(!/^\d{4}-\d{2}$/.test(ym))return toast('Pick a month first');
   const byId={};items.forEach(i=>byId[i.id]=i);
   const rows=[['Date','Item','Code','Type','Quantity','Unit','Note']];
-  moves.filter(m=>byId[m.itemId]&&(m.date||'').slice(0,7)===ym).sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(a.ts||0)-(b.ts||0))
+  moves.filter(m=>byId[m.itemId]&&(m.date||'').slice(0,7)===ym).sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(b.ts||0)-(a.ts||0))
     .forEach(m=>{const i=byId[m.itemId];rows.push([m.date,i.name,i.code||'',m.type==='in'?'IN':'OUT',m.qty,i.unit,m.note||''])});
   dl('inventory-transactions-'+ym+'.csv',rows);
 }
@@ -200,19 +176,6 @@ async function delItem(id){
   }catch(e){err(e)}
 }
 
-// Event Listeners & Initialization
-document.addEventListener('DOMContentLoaded', ()=>{
-  checkAuth();
-  $('#login-btn').addEventListener('click', handleLogin);
-  $('#login-pass').addEventListener('keydown', e=>{ if(e.key==='Enter') handleLogin(); });
-  $('#lock-btn').addEventListener('click', ()=>{
-    sessionStorage.removeItem('mrtex_auth');
-    $('#login-pass').value='';
-    $('#login-msg').style.display='none';
-    checkAuth();
-  });
-});
-
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-a],[data-tab],[data-c]');if(!b)return;
   const d=b.dataset;
@@ -295,7 +258,7 @@ function openDb(){return new Promise((res,rej)=>{
         onSnapshot(next){(subs[col]=subs[col]||new Set()).add(next);notify(col)}
       })
     });
-  })}
+  }})}
 async function jsonBackup(){
   if(!dls)return noDl();
   try{
@@ -360,7 +323,10 @@ async function storageMeter(){
 }
 $('#rf').addEventListener('change',e=>{const fl=e.target.files[0];e.target.value='';if(fl)ask('Replace ALL current data with this backup file?',()=>doRestore(fl))});
 
-(async function init(){
+async function startApp(){
+  if(appStarted)return;
+  appStarted=true;
+  render();
   dls=fileDl;$('#bk').style.display='';
   try{db=await openDb()}catch(e){db=null}
   if(!db){$('#msg').innerHTML='<div class="note">Browser storage is not available (private/incognito window?). Please open this page in a normal browser window.</div>';return}
@@ -369,4 +335,42 @@ $('#rf').addEventListener('change',e=>{const fl=e.target.files[0];e.target.value
   const snap=s=>s.docs.map(d=>({id:d.id,...d.data()}));
   db.collection('items').onSnapshot(s=>{items=snap(s);render();storageMeter()},err);
   db.collection('moves').onSnapshot(s=>{moves=snap(s);render()},err);
+}
+
+/* ---- Login & Session Guard ---- */
+(function initAuth(){
+  const overlay=$('#login-overlay'),wrap=$('#appWrap'),pass=$('#loginPass'),errBox=$('#login-error');
+  
+  function unlock(){
+    overlay.style.display='none';
+    wrap.style.display='block';
+    startApp();
+  }
+
+  function tryLogin(){
+    if(pass.value===APP_PASSWORD){
+      sessionStorage.setItem('mrtex_auth','1');
+      errBox.textContent='';
+      pass.value='';
+      unlock();
+    }else{
+      errBox.textContent='Incorrect password! Please try again.';
+      pass.focus();
+    }
+  }
+
+  if(sessionStorage.getItem('mrtex_auth')==='1'){
+    unlock();
+  }else{
+    pass.focus();
+  }
+
+  $('#loginBtn').addEventListener('click',tryLogin);
+  pass.addEventListener('keydown',e=>{if(e.key==='Enter')tryLogin()});
+  $('#logoutBtn').addEventListener('click',()=>{
+    sessionStorage.removeItem('mrtex_auth');
+    wrap.style.display='none';
+    overlay.style.display='flex';
+    pass.focus();
+  });
 })();
