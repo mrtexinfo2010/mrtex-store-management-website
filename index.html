@@ -11,13 +11,25 @@
 
 <!-- Login Screen Overlay -->
 <div id="login-overlay">
-  <div class="login-card">
-    <img alt="M.R. TEX" src="MRTEX-Logo.jpg" onerror="this.style.display='none'; document.getElementById('fallback-login').style.display='block';">
-    <div id="fallback-login" style="display:none; font-size:22px; font-weight:700; color:#111; margin-bottom:16px;">📦 M.R. TEX</div>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <div class="login-card" id="loginCard">
+    <div class="logo-box">
+      <img alt="M.R. TEX" src="MRTEX-Logo.jpg" onerror="this.style.display='none'; document.getElementById('fallback-login').style.display='block';">
+      <div id="fallback-login" style="display:none; font-size:22px; font-weight:700; color:#0a6cc2;">📦 M.R. TEX</div>
+    </div>
+    <h2>M.R.TEX Store Management</h2>
+    <p class="login-sub">Authorized Access Only — Enter Password</p>
     
-    <h2>M.R.TEX Store Login</h2>
-    <input type="password" id="loginPass" placeholder="Enter password" autocomplete="current-password">
-    <button id="loginBtn">Login</button>
+    <div class="pass-group">
+      <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+      <button type="button" id="togglePass" title="Show/Hide Password" aria-label="Toggle Password">👁️</button>
+    </div>
+
+    <button id="loginBtn">
+      <span>Access Dashboard</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </button>
     <div id="login-error"></div>
   </div>
 </div>
