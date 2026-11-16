@@ -1,5 +1,5 @@
 // --- LOGIN CONFIGURATION ---
-const APP_PASSWORD = "mrtex123"; // Apnar pochhondo moto password ekhane change korte paren
+const APP_PASSWORD = "MRTEX2025"; // Apnar pochhondo moto password ekhane change korte paren
 
 let photoTarget='',lbId='',db=null,dls=null,items=[],moves=[],tab='stock',q='',mvType='',mvItem='',pending=null,ym=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0'),appStarted=false;
 const $=s=>document.querySelector(s);
