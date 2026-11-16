@@ -1,5 +1,5 @@
 // --- LOGIN CONFIGURATION ---
-const APP_PASSWORD = "MRTEX2025"; // Apnar pochhondo moto password ekhane change korte paren
+const APP_PASSWORD = "MRTEX2025"; // পাসওয়ার্ড এখানে MRTEX2025 সেট করা আছে
 
 let photoTarget='',lbId='',db=null,dls=null,items=[],moves=[],tab='stock',q='',mvType='',mvItem='',pending=null,ym=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0'),appStarted=false;
 const $=s=>document.querySelector(s);
@@ -80,7 +80,7 @@ function dlTx(){
   if(!/^\d{4}-\d{2}$/.test(ym))return toast('Pick a month first');
   const byId={};items.forEach(i=>byId[i.id]=i);
   const rows=[['Date','Item','Code','Type','Quantity','Unit','Note']];
-  moves.filter(m=>byId[m.itemId]&&(m.date||'').slice(0,7)===ym).sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(b.ts||0)-(a.ts||0))
+  moves.filter(m=>byId[m.itemId]&&(m.date||'').slice(0,7)===ym).sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(b.ts||0)-(b.ts||0))
     .forEach(m=>{const i=byId[m.itemId];rows.push([m.date,i.name,i.code||'',m.type==='in'?'IN':'OUT',m.qty,i.unit,m.note||''])});
   dl('inventory-transactions-'+ym+'.csv',rows);
 }
@@ -123,7 +123,7 @@ async function backup(){
   const A=[['Item','Code','Unit','Opening stock','Total In','Total Out','Current balance','Minimum stock']];
   items.slice().sort(byCode).forEach(i=>{const x=t[i.id];A.push([i.name,i.code||'',i.unit,Number(i.opening)||0,x.in,x.out,x.bal,Number(i.min)||0])});
   const B=[['Date','Item','Code','Type','Quantity','Unit','Note']];
-  moves.filter(m=>byId[m.itemId]).sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(a.ts||0)-(b.ts||0)).forEach(m=>{const i=byId[m.itemId];B.push([m.date,i.name,i.code||'',m.type==='in'?'IN':'OUT',Number(m.qty)||0,i.unit,m.note||''])});
+  moves.filter(m=>byId[m.itemId]).sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(b.ts||0)-(a.ts||0)).forEach(m=>{const i=byId[m.itemId];B.push([m.date,i.name,i.code||'',m.type==='in'?'IN':'OUT',Number(m.qty)||0,i.unit,m.note||''])});
   const base='mrtex-store-backup-'+today()+'.';
   try{
     if(window.XLSX){
@@ -353,7 +353,8 @@ async function startApp(){
   }
 
   function tryLogin(){
-    if(pass.value===APP_PASSWORD){
+    // এখানে পাসওয়ার্ড MRTEX2025 সেট করা হয়েছে
+    if(pass.value==='MRTEX2025'){
       sessionStorage.setItem('mrtex_auth','1');
       errBox.textContent='';
       pass.value='';
