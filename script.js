@@ -80,7 +80,7 @@ function dlTx(){
   if(!/^\d{4}-\d{2}$/.test(ym))return toast('Pick a month first');
   const byId={};items.forEach(i=>byId[i.id]=i);
   const rows=[['Date','Item','Code','Type','Quantity','Unit','Note']];
-  moves.filter(m=>byId[m.itemId]&&(m.date||'').slice(0,7)===ym).sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(b.ts||0)-(b.ts||0))
+  moves.filter(m=>byId[m.itemId]&&(m.date||'').slice(0,7)===ym).sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(b.ts||0)-(a.ts||0))
     .forEach(m=>{const i=byId[m.itemId];rows.push([m.date,i.name,i.code||'',m.type==='in'?'IN':'OUT',m.qty,i.unit,m.note||''])});
   dl('inventory-transactions-'+ym+'.csv',rows);
 }
@@ -354,7 +354,7 @@ async function startApp(){
 
   function tryLogin(){
     // এখানে পাসওয়ার্ড MRTEX2025 সেট করা হয়েছে
-    if(pass.value==='MRTEX2025'){
+    if(pass.value===APP_PASSWORD){
       sessionStorage.setItem('mrtex_auth','1');
       errBox.textContent='';
       pass.value='';
