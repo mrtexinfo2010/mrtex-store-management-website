@@ -1,5 +1,5 @@
 // --- LOGIN CONFIGURATION ---
-const APP_PASSWORD = "MRTEX2025"; // পাসওয়ার্ড MRTEX2025 সেট করা আছে
+const APP_PASSWORD = "MRTEX2025";
 
 let photoTarget='',lbId='',db=null,dls=null,items=[],moves=[],tab='stock',q='',mvType='',mvItem='',pending=null,ym=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0'),appStarted=false;
 const $=s=>document.querySelector(s);
@@ -30,22 +30,36 @@ function monthly(){
     return{i,open,inn,out,close:open+inn-out};
   });
 }
-const card=(l,v,c)=>`<div class="card ${c||''}"><small>${l}</small><b>${v}</b></div>`;
+const card=(l,v,c,act)=>`<div class="card ${c||''}" ${act?`data-tab="${act}"`:''}><small>${l}</small><b>${v}</b></div>`;
 
 function render(){
   const t=calc(),ql=q.trim().toLowerCase();
   const low=items.filter(i=>i.min>0&&t[i.id].bal<=i.min).length;
-  $('#st').innerHTML=card('Total items',f(items.length))+card('Low stock',f(low),low?'w':'')+card('Total transactions',f(moves.length));
-  $('#tabs').innerHTML=[['stock','Stock Balance'],['log','In / Out Log'],['rep','Monthly Report']].map(x=>`<button data-tab="${x[0]}" class="${tab===x[0]?'on':''}">${x[1]}</button>`).join('');
+  
+  $('#st').innerHTML=card('Total items',f(items.length))+card('Low stock',f(low),low?'w':'','lowstock')+card('Total transactions',f(moves.length));
+  
+  // ট্যাব লিস্টে "Low Stock Items" অপশন যুক্ত করা হলো
+  $('#tabs').innerHTML=[
+    ['stock','Stock Balance'],
+    ['lowstock','Low Stock Items ('+low+')'],
+    ['log','In / Out Log'],
+    ['rep','Monthly Report']
+  ].map(x=>`<button data-tab="${x[0]}" class="${tab===x[0]?'on':''}">${x[1]}</button>`).join('');
+  
   const byId={};items.forEach(i=>byId[i.id]=i);
   const match=i=>!ql||(i.name+' '+(i.code||'')).toLowerCase().includes(ql);
   let h='';
-  if(tab==='stock'){
-    const rows=items.filter(match).sort(byCode);
-    if(!rows.length)h=`<div class="tw"><div class="empty">${items.length?'No items found':'No items yet — click “+ New Item”'}</div></div>`;
-    else h=`<div class="tw"><table><tr><th>Item</th><th>Unit</th><th>Opening</th><th>In</th><th>Out</th><th>Current balance</th><th></th></tr>`+rows.map(i=>{
+  
+  if(tab==='stock'||tab==='lowstock'){
+    let rows=items.filter(match).sort(byCode);
+    if(tab==='lowstock'){
+      rows=rows.filter(i=>i.min>0&&t[i.id].bal<=i.min);
+    }
+    
+    if(!rows.length)h=`<div class="tw"><div class="empty">${tab==='lowstock'?'No low stock items found!':'No items found — click “+ New Item”'}</div></div>`;
+    else h=`<div class="tw"><table><tr><th>Item</th><th>Unit</th><th>Opening</th><th>In</th><th>Out</th><th>Current balance</th><th>Minimum</th><th></th></tr>`+rows.map(i=>{
       const x=t[i.id],lw=i.min>0&&x.bal<=i.min;
-      return `<tr><td><div class="it">${thumb(i)}<div><b>${esc(i.name)}</b>${lw?'<span class="tag">Low</span>':''}<div class="mu">${esc(i.code||'')}</div></div></div></td><td>${esc(i.unit)}</td><td>${f(i.opening)}</td><td class="gc">+${f(x.in)}</td><td class="rc">−${f(x.out)}</td><td><b class="bal ${lw?'low':''}">${f(x.bal)}</b></td><td class="ac"><button data-a="in" data-id="${i.id}">+ In</button><button data-a="out" data-id="${i.id}">− Out</button><button class="gh" data-a="pick" data-id="${i.id}" title="Add / change photo">📷</button><button class="gh" data-a="del" data-id="${i.id}" title="Delete">🗑</button></td></tr>`}).join('')+`</table></div>`;
+      return `<tr><td><div class="it">${thumb(i)}<div><b>${esc(i.name)}</b>${lw?'<span class="tag">Low</span>':''}<div class="mu">${esc(i.code||'')}</div></div></div></td><td>${esc(i.unit)}</td><td>${f(i.opening)}</td><td class="gc">+${f(x.in)}</td><td class="rc">−${f(x.out)}</td><td><b class="bal ${lw?'low':''}">${f(x.bal)}</b></td><td>${f(i.min)}</td><td class="ac"><button data-a="in" data-id="${i.id}">+ In</button><button data-a="out" data-id="${i.id}">− Out</button><button class="gh" data-a="pick" data-id="${i.id}" title="Add / change photo">📷</button><button class="gh" data-a="del" data-id="${i.id}" title="Delete">🗑</button></td></tr>`}).join('')+`</table></div>`;
   }else if(tab==='log'){
     const rows=moves.filter(m=>byId[m.itemId]&&match(byId[m.itemId])).sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.ts||0)-(a.ts||0));
     if(!rows.length)h=`<div class="tw"><div class="empty">No transactions yet</div></div>`;
@@ -123,7 +137,7 @@ async function backup(){
   const A=[['Item','Code','Unit','Opening stock','Total In','Total Out','Current balance','Minimum stock']];
   items.slice().sort(byCode).forEach(i=>{const x=t[i.id];A.push([i.name,i.code||'',i.unit,Number(i.opening)||0,x.in,x.out,x.bal,Number(i.min)||0])});
   const B=[['Date','Item','Code','Type','Quantity','Unit','Note']];
-  moves.filter(m=>byId[m.itemId]).sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(b.ts||0)-(a.ts||0)).forEach(m=>{const i=byId[m.itemId];B.push([m.date,i.name,i.code||'',m.type==='in'?'IN':'OUT',Number(m.qty)||0,i.unit,m.note||''])});
+  moves.filter(m=>byId[m.itemId]).sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(b.ts||0)-(b.ts||0)).forEach(m=>{const i=byId[m.itemId];B.push([m.date,i.name,i.code||'',m.type==='in'?'IN':'OUT',Number(m.qty)||0,i.unit,m.note||''])});
   const base='mrtex-store-backup-'+today()+'.';
   try{
     if(window.XLSX){
